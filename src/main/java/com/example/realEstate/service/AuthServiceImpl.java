@@ -57,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
-        boolean isRefreshTokenValid = jwtUtil.validateToken(refreshTokenRequest.getRefreshToken());
+        boolean isRefreshTokenValid = jwtUtil.validateRefreshToken(refreshTokenRequest.getRefreshToken());
         if (isRefreshTokenValid) {
             // (check the expiration of the accessToken when request sent, if the is recent according to
             //  issue Date, then accept the renewal)

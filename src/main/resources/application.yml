@@ -2,12 +2,13 @@ spring:
   application:
     name: realestate-backend
   datasource:
-    password: Pass
+    password: postgres
     url: jdbc:postgresql://localhost:5432/realstate
     username: postgres
   jpa:
+    open-in-view: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect

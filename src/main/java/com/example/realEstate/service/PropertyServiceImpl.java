@@ -18,10 +18,14 @@ import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+
 
 @Service
 @RequiredArgsConstructor
@@ -104,30 +108,53 @@ class PropertyServiceImpl implements PropertyService {
     @Override
     public List<Offer> searchPropertyCriteria(Long id, Long pptId, String city, String state,
                                               Double price, LocalDateTime submittedAt) {
-        // TO-DO
-        // NEED TO BE FILTERED BY OWNER ID AS WELL
-//        Owner  / getOwnerById
-        // Properties owner.getProperties()
-//        properties.stream(property.getOffers().
+// TO-DO
+// NEED TO BE FILTERED BY OWNER ID AS WELL
+// Owner / getOwnerById
+// Properties owner.getProperties()
+// properties.stream(property.getOffers().
         return searchOffersDao.searchPropertyCriteria(id, pptId, city, state, price,submittedAt);
     }
 
     @Override
-    public List<Property> findPropertiesByCriteria(
-            Double minPrice,
-            Double maxPrice,
-            ListingType listingType,
-            Integer minBedRooms,
-            Integer maxBedRooms,
-            Double minBathRooms,
-            Double maxBathRooms,
-            PropertyType propertyType,
-            String city,
-            String state) {
+    public Page<Property> findPropertiesByCriteria(
+            Double minPrice, Double maxPrice,
+            ListingType listingType, Integer minBedRooms,
+            Integer maxBedRooms, Double minBathRooms, Double maxBathRooms, PropertyType propertyType,
+            String city, String state, Pageable pageable) {
 
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Property> query = builder.createQuery(Property.class);
         Root<Property> root = query.from(Property.class);
+        List<Predicate> predicates = buildPredicates(builder, root, minPrice, maxPrice, listingType, minBedRooms,
+                maxBedRooms, minBathRooms, maxBathRooms, propertyType, city, state);
+
+        query.where(predicates.toArray(new Predicate[0]));
+        query.select(root);
+
+        List<Property> properties = entityManager.createQuery(query)
+                .setFirstResult((int) pageable.getOffset())
+                .setMaxResults(pageable.getPageSize())
+                .getResultList();
+
+        CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
+        Root<Property> countRoot = countQuery.from(Property.class);
+        List<Predicate> countPredicates = buildPredicates(builder, countRoot, minPrice, maxPrice, listingType, minBedRooms,
+                maxBedRooms, minBathRooms, maxBathRooms, propertyType, city, state);
+
+        countQuery.where(countPredicates.toArray(new Predicate[0]));
+        countQuery.select(builder.count(countRoot));
+
+        Long totalItems = entityManager.createQuery(countQuery).getSingleResult();
+
+        return new PageImpl<>(properties, pageable, totalItems);
+    }
+
+    private List<Predicate> buildPredicates(CriteriaBuilder builder, Root<Property> root, Double minPrice,
+                                            Double maxPrice, ListingType listingType, Integer minBedRooms,
+                                            Integer maxBedRooms, Double minBathRooms, Double maxBathRooms,
+                                            PropertyType propertyType, String city, String state) {
+
         List<Predicate> predicates = new ArrayList<>();
 
         if (minPrice != null) {
@@ -161,10 +188,8 @@ class PropertyServiceImpl implements PropertyService {
             predicates.add(builder.like(builder.lower(root.get("address").get("state")), "%" + state.toLowerCase() + "%"));
         }
 
-        query.where(predicates.toArray(new Predicate[0]));
-        return entityManager.createQuery(query).getResultList();
+        return predicates;
     }
-
 
     @Override
     public List<Property> findPropertyStatus() {

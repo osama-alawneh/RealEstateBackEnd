@@ -18,7 +18,7 @@ public class JwtUtil {
     @Autowired
     UserDetailsService userDetailsService;
     private final String secret = "top-secret";
-    private final long expiration = 20 * 60 * 60 * 60;
+    private final long expiration = 20 * 60 * 60 * 60 * 60;
     private final long refreshExpiration = 50 * 60 * 60 * 60 * 60;
 
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
@@ -89,6 +89,25 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+    public boolean validateRefreshToken(String token) {
+        try {
+            Jws<Claims> claims = Jwts.parser()
+                    .setSigningKey(secret)
+                    .parseClaimsJws(token);
+            return claims.getBody().get("roles") == null;
+        } catch (SignatureException e) {
+            System.out.println(e.getMessage());
+        } catch (MalformedJwtException e) {
+            System.out.println(e.getMessage());
+        } catch (ExpiredJwtException e) {
+            System.out.println(e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            System.out.println(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+        }
+        return false;
     }
 
     public boolean validateToken(String token) {

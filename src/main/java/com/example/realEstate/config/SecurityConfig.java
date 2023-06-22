@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/properties/**").permitAll()
                 .requestMatchers("/api/v1/owners/**").hasAnyAuthority(ownerRole) // Dynamic authorities
                 .requestMatchers("/api/v1/customers/**").hasAnyAuthority(customerRole)
+//                .requestMatchers("/api/v1/customers/**").permitAll()
                 .requestMatchers("/api/v1/admin/**").hasAnyAuthority(adminRole)
 
                 .anyRequest()

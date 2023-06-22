@@ -19,10 +19,17 @@ public class MyUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        var user= userRepository.findByEmail(username);
-        System.out.println("user: "+user);
-        var userDetails= new MyUserDetails(user);
-        return userDetails;
+        try{
+            var user= userRepository.findByEmail(username);
+            System.out.println("user: "+user.getId());
+            var userDetails = new MyUserDetails(user);
+            return userDetails;
+        }
+        catch(Exception e){
+            System.out.println(e.getMessage());
+            return null;
+        }
+
     }
 
 }
